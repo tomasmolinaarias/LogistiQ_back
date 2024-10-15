@@ -11,4 +11,4 @@ middlewareLoad(app);
 routerLoad(app);
 
 const PORT = process.env.PORT || 3500;
-app.listen(PORT, () => console.log(`Servidor ejecutándose en: http://localhost:${PORT}`));
+app.listen(PORT, () => console.log(`Servidor 🚀 🟢 http://localhost:${PORT} 🟢`));
