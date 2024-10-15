@@ -19,3 +19,7 @@ yarn-error.log*
 # Archivos de sistema (macOS/Windows)
 .DS_Store
 Thumbs.db
+
+#archivo docker 
+
+mysql_data/
