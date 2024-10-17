@@ -1,7 +1,7 @@
 {
   "name": "ermanake_back",
   "version": "1.0.0",
-  "description": ""
+  "description": "",
   "main": "index.js",
   "scripts": {
     "build": "tsc",
@@ -30,5 +30,5 @@
     "@types/node": "^22.7.5",
     "@types/sequelize": "^4.28.20",
     "ts-node-dev": "^2.0.0"
-  },
+  }
 }
