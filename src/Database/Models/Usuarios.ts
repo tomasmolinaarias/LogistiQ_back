@@ -1,9 +1,16 @@
-import { Table, Column, Model, DataType, ForeignKey, BelongsTo } from 'sequelize-typescript';
-import { RolesUsuarios } from './RolesUsuarios';
+import {
+  Table,
+  Column,
+  Model,
+  DataType,
+  ForeignKey,
+  BelongsTo,
+} from "sequelize-typescript";
+import { RolesUsuarios } from "./RolesUsuarios";
 
 @Table({
-  tableName: 'Usuarios',
-  timestamps: false,  // Ya gestionamos el tiempo manualmente con `fecha_registro`
+  tableName: "Usuarios",
+  timestamps: false, // Ya gestionamos el tiempo manualmente con `fecha_registro`
 })
 export class Usuarios extends Model<Usuarios> {
   @Column({
@@ -50,8 +57,8 @@ export class Usuarios extends Model<Usuarios> {
   rol!: RolesUsuarios;
 
   @Column({
-    type: DataType.ENUM('activo', 'inactivo'),
-    defaultValue: 'activo',
+    type: DataType.ENUM("activo", "inactivo"),
+    defaultValue: "activo",
   })
   estado!: string;
 
@@ -63,7 +70,7 @@ export class Usuarios extends Model<Usuarios> {
 
   // Método para validar la contraseña (se usará en Auth)
   async validarPassword(password: string): Promise<boolean> {
-    const bcrypt = require('bcrypt');
+    const bcrypt = require("bcrypt");
     return await bcrypt.compare(password, this.password_hash);
   }
 }
