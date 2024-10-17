@@ -23,12 +23,7 @@ sequelize.authenticate()
   .catch((error) => {
     console.error('Error al conectar con la base de datos 🔴:', error);
   });
-  console.log({
-    host: process.env.DB_HOST,
-    username: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME
-  });
+
   
 const PORT = process.env.PORT || 3500;
 app.listen(PORT, () => console.log(`Servidor 🚀 🟢 http://localhost:${PORT} 🟢`));
