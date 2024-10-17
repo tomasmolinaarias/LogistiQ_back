@@ -2,10 +2,12 @@ import { Request, Response } from 'express';
 import { RolesUsuarios } from '../Database/Models/RolesUsuarios';
 
 const RolesUsuariosController = {
-   // Obtener todos los roles
+
   listarRoles: async (req: Request, res: Response): Promise<Response | void> => {
     try {
       const roles = await RolesUsuarios.findAll(); 
+    console.log("first")
+      
       return res.json({estado:true,roles}); 
     } catch (error) {
       console.error('Error al listar roles:', error);
@@ -15,7 +17,7 @@ const RolesUsuariosController = {
         error,
       });
     }
-  },
+  }
 };
 
 export default RolesUsuariosController;
