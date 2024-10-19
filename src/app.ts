@@ -8,9 +8,13 @@ dotenv.config();
 
 const app: Application = express();
 
+// Cargar middlewares
 middlewareLoad(app);
+
+// Cargar las rutas
 routerLoad(app);
 
+// Probar la conexión con la base de datos y sincronizar los modelos
 sequelize
   .authenticate()
   .then(() => {
@@ -24,6 +28,7 @@ sequelize
     console.error("Error al conectar con la base de datos 🔴:", error);
   });
 
+// Manejo de errores global
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   console.error(err.stack);
   res.status(500).json({
@@ -31,7 +36,11 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
     error: err.message,
   });
 });
+
+// Iniciar el servidor
 const PORT = process.env.PORT || 3500;
 app.listen(PORT, () =>
   console.log(`Servidor 🚀 🟢 http://localhost:${PORT} 🟢`)
 );
+
+export default app;

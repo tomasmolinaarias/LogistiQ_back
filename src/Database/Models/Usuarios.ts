@@ -25,7 +25,7 @@ export class Usuarios extends Model<Usuarios> {
     allowNull: false,
     unique: true,
   })
-  dni!: string;
+  rut!: string;
 
   @Column({
     type: DataType.STRING(100),

@@ -22,3 +22,9 @@ Thumbs.db
 
 #Archivos de docker
 mysql_data/
+
+#docker
+Docker/
+
+
+database.ts
