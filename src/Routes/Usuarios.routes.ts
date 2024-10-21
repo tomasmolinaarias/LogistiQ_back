@@ -12,6 +12,15 @@ router.post("/register", async (req, res, next) => {
   }
 });
 
+// Ruta para iniciar sesión y generar un token
+router.post("/login", async (req, res, next) => {
+  try {
+    await UsuariosController.iniciarSesion(req, res);
+  } catch (error) {
+    next(error);
+  }
+});
+
 // Ruta para leer todos los usuarios
 router.get("/getAll", async (req, res, next) => {
   try {

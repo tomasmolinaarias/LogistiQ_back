@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { Usuarios } from "../Database/Models/Usuarios";
 import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
 
 // Función para validar el RUT chileno
 const validarRut = (rut: string): boolean => {
@@ -56,10 +57,19 @@ const UsuariosController = {
       const nuevoUsuario = await Usuarios.create({
         nombre,
         email,
-        password_hash: hashedPassword, // Asegúrate de usar el nombre correcto de la propiedad
+        password_hash: hashedPassword,
         rut,
         idRol,
+        estado: "activo", // Establecemos el estado del usuario
+        fecha_registro: new Date(), // Fecha de registro
       } as Usuarios);
+
+      // Crear el token JWT
+      const token = jwt.sign(
+        { idUsuario: nuevoUsuario.idUsuario, email: nuevoUsuario.email },
+        process.env.JWT_SECRET || "secret_key",
+        { expiresIn: "1h" }
+      );
 
       return res.status(201).json({
         estado: true,
@@ -73,9 +83,46 @@ const UsuariosController = {
           estado: nuevoUsuario.estado,
           fecha_registro: nuevoUsuario.fecha_registro,
         },
+        token,
       });
     } catch (error) {
       console.error("Error al crear usuario:", error);
+      return res.status(500).json({ estado: false, message: "Error interno del servidor", error });
+    }
+  },
+  
+  // Iniciar sesión y generar token
+  iniciarSesion: async (req: Request, res: Response): Promise<Response | void> => {
+    const { email, password } = req.body;
+
+    try {
+      // Buscar usuario por email
+      const usuario = await Usuarios.findOne({ where: { email } });
+
+      if (!usuario) {
+        return res.status(404).json({ message: "Usuario no encontrado" });
+      }
+
+      // Verificar la contraseña
+      const validPassword = await bcrypt.compare(password, usuario.password_hash);
+      if (!validPassword) {
+        return res.status(400).json({ message: "Contraseña incorrecta" });
+      }
+
+      // Crear el token JWT
+      const token = jwt.sign(
+        { idUsuario: usuario.idUsuario, email: usuario.email },
+        process.env.JWT_SECRET || "secret_key",
+        { expiresIn: "1h" }
+      );
+
+      return res.status(200).json({
+        estado: true,
+        message: "Inicio de sesión exitoso",
+        token,
+      });
+    } catch (error) {
+      console.error("Error al iniciar sesión:", error);
       return res.status(500).json({ estado: false, message: "Error interno del servidor", error });
     }
   },
@@ -106,12 +153,10 @@ const UsuariosController = {
       let usuario;
 
       if (id) {
-        // Buscar el usuario por ID excluyendo la contraseña hasheada
         usuario = await Usuarios.findByPk(id as string, {
           attributes: { exclude: ["password_hash"] },
         });
-      } else if (rut && typeof rut === 'string') {
-        // Buscar el usuario por RUT solo si `rut` está definido y es una cadena
+      } else if (rut && typeof rut === "string") {
         usuario = await Usuarios.findOne({
           where: { rut },
           attributes: { exclude: ["password_hash"] },
