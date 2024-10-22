@@ -49,6 +49,13 @@ router.delete("/deleteUser", validador.token, async (req, res, next) => {
     next(error);
   }
 });
-
+// ACtualizar Usuario
+router.patch("/updateUser", validador.token, async (req, res, next) => {
+  try {
+    await UsuariosController.actualizarUsuario(req, res);
+  } catch (error) {
+    next(error);
+  }
+});
 
 export default router;

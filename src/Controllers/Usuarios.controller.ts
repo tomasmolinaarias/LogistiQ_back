@@ -150,6 +150,75 @@ buscarUsuario: async (req: Request, res: Response): Promise<Response | void> => 
       });
     }
   },
+  // Actualizar usuario
+  actualizarUsuario: async (req: Request, res: Response): Promise<Response | void> => {
+    const { id } = req.body; // Asumimos que el ID del usuario siempre será enviado
+
+    try {
+      // Buscamos el usuario por su ID
+      const usuario = await Usuarios.findByPk(id);
+
+      if (!usuario) {
+        return res.status(404).json({ message: "Usuario no encontrado" });
+      }
+
+      // Preparamos un objeto con los datos a actualizar
+      const actualizaciones: any = {};
+
+      // Solo actualizamos los campos que se envían en el cuerpo de la solicitud
+      if (req.body.nombre) {
+        actualizaciones.nombre = req.body.nombre;
+      }
+      if (req.body.email) {
+        const emailExistente = await Usuarios.findOne({ where: { email: req.body.email } });
+        if (emailExistente && emailExistente.idUsuario !== id) {
+          return res.status(400).json({ message: "El email ya está en uso" });
+        }
+        actualizaciones.email = req.body.email;
+      }
+      if (req.body.dni) {
+        const dniExistente = await Usuarios.findOne({ where: { dni: req.body.dni } });
+        if (dniExistente && dniExistente.idUsuario !== id) {
+          return res.status(400).json({ message: "El DNI ya está en uso" });
+        }
+        actualizaciones.dni = req.body.dni;
+      }
+      if (req.body.password) {
+        const saltRounds = 10;
+        const hashedPassword = await bcrypt.hash(req.body.password, saltRounds);
+        actualizaciones.password_hash = hashedPassword;
+      }
+      if (req.body.idRol) {
+        actualizaciones.idRol = req.body.idRol;
+      }
+      if (req.body.estado) {
+        actualizaciones.estado = req.body.estado;
+      }
+
+      // Realizamos la actualización
+      await usuario.update(actualizaciones);
+
+      return res.status(200).json({
+        estado: true,
+        message: "Usuario actualizado correctamente",
+        usuario: {
+          idUsuario: usuario.idUsuario,
+          nombre: usuario.nombre,
+          email: usuario.email,
+          dni: usuario.dni,
+          idRol: usuario.idRol,
+          estado: usuario.estado,
+        },
+      });
+    } catch (error) {
+      console.error("Error al actualizar usuario:", error);
+      return res.status(500).json({
+        estado: false,
+        message: "Error interno del servidor",
+        error,
+      });
+    }
+  },
 };
 
 export default UsuariosController;
