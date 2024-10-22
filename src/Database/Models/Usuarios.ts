@@ -25,7 +25,7 @@ export class Usuarios extends Model<Usuarios> {
     allowNull: false,
     unique: true,
   })
-  rut!: string;
+  dni!: string;  // Cambio de 'rut' a 'dni' según el SQL
 
   @Column({
     type: DataType.STRING(100),
