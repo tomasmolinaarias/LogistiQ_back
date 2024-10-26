@@ -74,7 +74,7 @@ const UsuariosController = {
   ): Promise<Response | void> => {
     try {
       const usuarios = await Usuarios.findAll({
-        attributes: { exclude: ["password_hash"] },
+        attributes: { exclude: ["password_hash"] }, 
       });
 
       return res.status(200).json({
@@ -90,37 +90,36 @@ const UsuariosController = {
     }
   },
   // Método para buscar un usuario por ID o RUT desde el cuerpo de la solicitud
-buscarUsuario: async (req: Request, res: Response): Promise<Response | void> => {
-  const { id, dni } = req.body;  // Obtenemos ID o DNI desde el cuerpo de la solicitud
-  try {
-    let usuario;
+  buscarUsuario: async (req: Request, res: Response): Promise<Response | void> => {
+    const { id, dni } = req.body;  // Obtenemos ID o DNI desde el cuerpo de la solicitud
+    try {
+      let usuario;
 
-    if (id) {
-      usuario = await Usuarios.findByPk(id, {
-        attributes: { exclude: ["password_hash"] },
+      if (id) {
+        usuario = await Usuarios.findByPk(id, {
+          attributes: { exclude: ["password_hash"] },
+        });
+      } else if (dni) {
+        usuario = await Usuarios.findOne({
+          where: { dni },
+          attributes: { exclude: ["password_hash"] },
+        });
+      }
+
+      if (!usuario) {
+        return res.status(404).json({ message: "Usuario no encontrado" });
+      }
+
+      return res.status(200).json({
+        estado: true,
+        message: "Usuario obtenido exitosamente",
+        usuario,
       });
-    } else if (dni) {
-      usuario = await Usuarios.findOne({
-        where: { dni },
-        attributes: { exclude: ["password_hash"] },
-      });
+    } catch (error) {
+      console.error("Error al obtener usuario:", error);
+      return res.status(500).json({ estado: false, message: "Error interno del servidor", error });
     }
-
-    if (!usuario) {
-      return res.status(404).json({ message: "Usuario no encontrado" });
-    }
-
-    return res.status(200).json({
-      estado: true,
-      message: "Usuario obtenido exitosamente",
-      usuario,
-    });
-  } catch (error) {
-    console.error("Error al obtener usuario:", error);
-    return res.status(500).json({ estado: false, message: "Error interno del servidor", error });
-  }
-},
-
+  },
   // Eliminar un usuario con ID
   eliminarUsuario: async (
     req: Request,
