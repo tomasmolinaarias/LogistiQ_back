@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { Usuarios } from "../Database/Models/Usuarios";
+import { RolesUsuarios } from "../Database/Models/RolesUsuarios";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
@@ -67,14 +68,15 @@ const UsuariosController = {
         .json({ estado: false, message: "Error interno del servidor", error });
     }
   },
-  // Leer todos los usuarios
-  leerUsuarios: async (
+   // Leer todos los usuarios con rol asociado
+   leerUsuarios: async (
     req: Request,
     res: Response
   ): Promise<Response | void> => {
     try {
       const usuarios = await Usuarios.findAll({
         attributes: { exclude: ["password_hash"] },
+        include: [{ model: RolesUsuarios, attributes: ["nombreRol"] }], // Incluye el rol y su nombre
       });
 
       return res.status(200).json({
@@ -89,38 +91,40 @@ const UsuariosController = {
         .json({ estado: false, message: "Error interno del servidor", error });
     }
   },
-  // Método para buscar un usuario por ID o RUT desde el cuerpo de la solicitud
-buscarUsuario: async (req: Request, res: Response): Promise<Response | void> => {
-  const { id, dni } = req.body;  // Obtenemos ID o DNI desde el cuerpo de la solicitud
-  try {
-    let usuario;
+  // Método para buscar un usuario por ID o DNI y mostrar su rol
+  buscarUsuario: async (req: Request, res: Response): Promise<Response | void> => {
+    const { id, dni } = req.body;
 
-    if (id) {
-      usuario = await Usuarios.findByPk(id, {
-        attributes: { exclude: ["password_hash"] },
+    try {
+      let usuario;
+
+      if (id) {
+        usuario = await Usuarios.findByPk(id, {
+          attributes: { exclude: ["password_hash"] },
+          include: [{ model: RolesUsuarios, attributes: ["nombreRol"] }],
+        });
+      } else if (dni) {
+        usuario = await Usuarios.findOne({
+          where: { dni },
+          attributes: { exclude: ["password_hash"] },
+          include: [{ model: RolesUsuarios, attributes: ["nombreRol"] }],
+        });
+      }
+
+      if (!usuario) {
+        return res.status(404).json({ message: "Usuario no encontrado" });
+      }
+
+      return res.status(200).json({
+        estado: true,
+        message: "Usuario obtenido exitosamente",
+        usuario,
       });
-    } else if (dni) {
-      usuario = await Usuarios.findOne({
-        where: { dni },
-        attributes: { exclude: ["password_hash"] },
-      });
+    } catch (error) {
+      console.error("Error al obtener usuario:", error);
+      return res.status(500).json({ estado: false, message: "Error interno del servidor", error });
     }
-
-    if (!usuario) {
-      return res.status(404).json({ message: "Usuario no encontrado" });
-    }
-
-    return res.status(200).json({
-      estado: true,
-      message: "Usuario obtenido exitosamente",
-      usuario,
-    });
-  } catch (error) {
-    console.error("Error al obtener usuario:", error);
-    return res.status(500).json({ estado: false, message: "Error interno del servidor", error });
-  }
-},
-
+  },
   // Eliminar un usuario con ID
   eliminarUsuario: async (
     req: Request,

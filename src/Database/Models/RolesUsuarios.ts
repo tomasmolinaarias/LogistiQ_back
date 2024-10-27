@@ -16,5 +16,5 @@ export class RolesUsuarios extends Model<RolesUsuarios> {
     type: DataType.STRING(50),
     allowNull: false,
   })
-  nombreRol!: string;
+  nombreRol!: string; // Nombre del rol, como 'Administrador' o 'Usuario'
 }

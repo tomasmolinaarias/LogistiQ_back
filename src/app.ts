@@ -15,17 +15,16 @@ middlewareLoad(app);
 routerLoad(app);
 
 // Probar la conexión con la base de datos y sincronizar los modelos
-sequelize
-  .authenticate()
+sequelize.authenticate()
   .then(() => {
-    console.log("Conexión exitosa con la base de datos 🟢");
-    return sequelize.sync(); // Sincroniza los modelos con la base de datos
+    console.log('Conexión a la base de datos exitosa.');
+    return sequelize.sync({ alter: true });
   })
   .then(() => {
-    console.log("Modelos sincronizados con la base de datos 🟢");
+    console.log('Modelos sincronizados con la base de datos.');
   })
   .catch((error) => {
-    console.error("Error al conectar con la base de datos 🔴:", error);
+    console.error('Error al conectar a la base de datos:', error);
   });
 
 // Manejo de errores global
