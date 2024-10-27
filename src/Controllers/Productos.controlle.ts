@@ -4,9 +4,9 @@ import { Inventario } from "../Database/Models/Inventario";
 import { CreationAttributes } from "sequelize";
 
 const ProductosController = {
-  // Crear un nuevo producto
+  // Crear un nuevo producto y su inventario
   crearProducto: async (req: Request, res: Response): Promise<Response | void> => {
-    const { codigoSAP, nombre, categoria, precioCompra, estado } = req.body;
+    const { codigoSAP, nombre, categoria, precioCompra, estado, cantidadDisponible, nivelMinimo } = req.body;
 
     try {
       const productoExistente = await Productos.findOne({ where: { codigoSAP } });
@@ -14,7 +14,7 @@ const ProductosController = {
         return res.status(400).json({ message: 'El código SAP ya está en uso' });
       }
 
-      // Crear el nuevo producto, asegurando los atributos requeridos
+      // Crear el nuevo producto
       const nuevoProducto = await Productos.create({
         codigoSAP,
         nombre,
@@ -22,10 +22,18 @@ const ProductosController = {
         precioCompra,
         estado: estado || 'activo',
         fecha_registro: new Date()
-      } as CreationAttributes<Productos>); // Se usa `CreationAttributes` para evitar error de tipos
+      } as CreationAttributes<Productos>);
+
+      // Crear inventario asociado al producto, utilizando CreationAttributes<Inventario>
+      await Inventario.create({
+        idProducto: nuevoProducto.idProducto,
+        cantidadDisponible: cantidadDisponible || 0,
+        nivelMinimo: nivelMinimo || 0,
+        fecha_actualizacion: new Date()
+      } as CreationAttributes<Inventario>);
 
       return res.status(201).json({
-        message: 'Producto creado exitosamente',
+        message: 'Producto e inventario creados exitosamente',
         producto: nuevoProducto
       });
     } catch (error) {
@@ -33,7 +41,6 @@ const ProductosController = {
       return res.status(500).json({ message: 'Error interno del servidor', error });
     }
   },
-
   // Leer todos los productos
   leerProductos: async (req: Request, res: Response): Promise<Response | void> => {
     try {
@@ -107,10 +114,9 @@ const ProductosController = {
     }
   },
 
-  // Eliminar un producto
+  // Eliminar un producto y su inventario
   eliminarProducto: async (req: Request, res: Response): Promise<Response | void> => {
     const { idProducto } = req.body;
-    console.log("🚀 ~ eliminarProducto: ~ id:", idProducto)
 
     try {
       const producto = await Productos.findByPk(idProducto);
@@ -118,10 +124,14 @@ const ProductosController = {
         return res.status(404).json({ message: 'Producto no encontrado' });
       }
 
+      // Eliminar el inventario asociado
+      await Inventario.destroy({ where: { idProducto } });
+
+      // Eliminar el producto
       await producto.destroy();
 
       return res.status(200).json({
-        message: 'Producto eliminado exitosamente'
+        message: 'Producto e inventario eliminados exitosamente'
       });
     } catch (error) {
       console.error('Error al eliminar producto:', error);
