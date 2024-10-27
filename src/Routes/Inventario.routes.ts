@@ -5,7 +5,7 @@ import validador from '../Middlewares/auth.middleware';
 const router: Router = Router();
 
 // Ruta para crear una nueva entrada en el inventario
-router.post('/crear', validador.token, async (req, res, next) => {
+router.post('/create', validador.token, async (req, res, next) => {
   try {
     await InventarioController.crearInventario(req, res);
   } catch (error) {
@@ -14,7 +14,7 @@ router.post('/crear', validador.token, async (req, res, next) => {
 });
 
 // Ruta para leer todo el inventario
-router.get('/todos', validador.token, async (req, res, next) => {
+router.get('/getAll', validador.token, async (req, res, next) => {
   try {
     await InventarioController.leerInventario(req, res);
   } catch (error) {
@@ -22,7 +22,7 @@ router.get('/todos', validador.token, async (req, res, next) => {
   }
 });
 // Ruta para buscar inventario por idProducto (usando el cuerpo de la solicitud)
-router.post("/buscarPorProducto", validador.token, async (req, res, next) => {
+router.post("/get", validador.token, async (req, res, next) => {
   try {
     await InventarioController.buscarInventarioPorProducto(req, res);
   } catch (error) {
@@ -31,7 +31,7 @@ router.post("/buscarPorProducto", validador.token, async (req, res, next) => {
 });
 
 // Ruta para actualizar una entrada de inventario (idInventario en el cuerpo)
-router.put('/actualizar', validador.token, async (req, res, next) => {
+router.put('/update', validador.token, async (req, res, next) => {
   try {
     await InventarioController.actualizarInventario(req, res);
   } catch (error) {
@@ -40,7 +40,7 @@ router.put('/actualizar', validador.token, async (req, res, next) => {
 });
 
 // Ruta para eliminar una entrada de inventario (idInventario en el cuerpo)
-router.delete('/eliminar', validador.token, async (req, res, next) => {
+router.delete('/delete', validador.token, async (req, res, next) => {
   try {
     await InventarioController.eliminarInventario(req, res);
   } catch (error) {

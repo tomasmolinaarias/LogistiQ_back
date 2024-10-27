@@ -25,7 +25,7 @@ export class Usuarios extends Model<Usuarios> {
     allowNull: false,
     unique: true,
   })
-  dni!: string;  // Cambio de 'rut' a 'dni' según el SQL
+  dni!: string;  // Usamos 'dni' según el SQL
 
   @Column({
     type: DataType.STRING(100),
@@ -54,7 +54,7 @@ export class Usuarios extends Model<Usuarios> {
   idRol!: number;
 
   @BelongsTo(() => RolesUsuarios)
-  rol!: RolesUsuarios;
+  rol!: RolesUsuarios; // Asocia el usuario con su rol
 
   @Column({
     type: DataType.ENUM("activo", "inactivo"),

@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { Usuarios } from "../Database/Models/Usuarios";
+import { RolesUsuarios } from "../Database/Models/RolesUsuarios";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
@@ -67,14 +68,15 @@ const UsuariosController = {
         .json({ estado: false, message: "Error interno del servidor", error });
     }
   },
-  // Leer todos los usuarios
-  leerUsuarios: async (
+   // Leer todos los usuarios con rol asociado
+   leerUsuarios: async (
     req: Request,
     res: Response
   ): Promise<Response | void> => {
     try {
       const usuarios = await Usuarios.findAll({
-        attributes: { exclude: ["password_hash"] }, 
+        attributes: { exclude: ["password_hash"] },
+        include: [{ model: RolesUsuarios, attributes: ["nombreRol"] }], // Incluye el rol y su nombre
       });
 
       return res.status(200).json({
@@ -89,20 +91,23 @@ const UsuariosController = {
         .json({ estado: false, message: "Error interno del servidor", error });
     }
   },
-  // Método para buscar un usuario por ID o RUT desde el cuerpo de la solicitud
+  // Método para buscar un usuario por ID o DNI y mostrar su rol
   buscarUsuario: async (req: Request, res: Response): Promise<Response | void> => {
-    const { id, dni } = req.body;  // Obtenemos ID o DNI desde el cuerpo de la solicitud
+    const { id, dni } = req.body;
+
     try {
       let usuario;
 
       if (id) {
         usuario = await Usuarios.findByPk(id, {
           attributes: { exclude: ["password_hash"] },
+          include: [{ model: RolesUsuarios, attributes: ["nombreRol"] }],
         });
       } else if (dni) {
         usuario = await Usuarios.findOne({
           where: { dni },
           attributes: { exclude: ["password_hash"] },
+          include: [{ model: RolesUsuarios, attributes: ["nombreRol"] }],
         });
       }
 
