@@ -5,9 +5,11 @@ import {
   Model,
   DataType,
   HasMany,
+  ForeignKey,
+  BelongsTo,
 } from "sequelize-typescript";
 import { Bitacora } from "./Bitacora";
-import { RolesUsuarios } from "./RolesUsuarios";  // Manteniendo importaciones existentes
+import { RolesUsuarios } from "./RolesUsuarios"; // Importación del modelo relacionado
 
 @Table({
   tableName: "Usuarios",
@@ -62,6 +64,18 @@ export class Usuarios extends Model<Usuarios> {
   // Relación de HasMany con el modelo Bitacora para tener acceso a todos los registros
   @HasMany(() => Bitacora)
   bitacoras!: Bitacora[];
+
+  // Definir la clave foránea para RolesUsuarios
+  @ForeignKey(() => RolesUsuarios)
+  @Column({
+    type: DataType.INTEGER,
+    allowNull: false,
+  })
+  idRol!: number;
+
+  // Asociación con el modelo RolesUsuarios
+  @BelongsTo(() => RolesUsuarios, { as: "rol" })
+  rol!: RolesUsuarios;
 
   // Método para validar la contraseña (se usará en Auth)
   async validarPassword(password: string): Promise<boolean> {

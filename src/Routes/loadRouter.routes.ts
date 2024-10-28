@@ -6,7 +6,9 @@ import ProductosRoutes from "./Productos.routes"
 import InventarioRoutes from "./Inventario.routes"
 import Bitacora from "./Bitacora.routes"
 import HistorialPrecios from "./HistorialPrecios.routes"
+import prediccion from "./Predicciones.routes"
 export const load = (app: Application): void => {
+  app.use('/api/prediccion', prediccion); 
   app.use('/api/HistorialPrecios', HistorialPrecios); 
   app.use('/api/bitacora', Bitacora); 
   app.use('/api/productos', ProductosRoutes); 

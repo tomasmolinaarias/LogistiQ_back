@@ -1,6 +1,7 @@
 import { Table, Column, Model, DataType, Unique, HasOne, HasMany } from "sequelize-typescript";
 import { Inventario } from "./Inventario";
 import { HistorialPrecios } from "./HistorialPrecios";
+import { Predicciones } from "./Predicciones"; // Importar Predicciones
 
 @Table({
   tableName: "Productos",
@@ -57,4 +58,8 @@ export class Productos extends Model<Productos> {
   // Relación con HistorialPrecios
   @HasMany(() => HistorialPrecios)
   historialPrecios!: HistorialPrecios[];
+
+  // Relación con Predicciones
+  @HasMany(() => Predicciones)
+  predicciones!: Predicciones[];
 }

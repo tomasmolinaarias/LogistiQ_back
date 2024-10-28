@@ -5,9 +5,11 @@ import { registrarEnBitacora } from "../utils/auditoria";
 import { CustomRequest } from "../Middlewares/auth.middleware";
 import { CreationAttributes } from "sequelize";
 import { HistorialPrecios } from "../Database/Models/HistorialPrecios";
+import { Predicciones } from "../Database/Models/Predicciones";
+import Prediccion from "../utils/prediccionUtilidades"; // Importa la utilidad de predicción
 
 const ProductosController = {
-  // Crear un nuevo producto y su inventario, y registrar en el historial de precios
+  // Crear un nuevo producto, inventario, registrar en el historial de precios y generar predicción inicial
   crearProducto: async (
     req: CustomRequest,
     res: Response
@@ -54,6 +56,19 @@ const ProductosController = {
         nivelMinimo: nivelMinimo || 0,
         fecha_actualizacion: new Date(),
       } as CreationAttributes<Inventario>);
+      // Generar predicción inicial usando Brown con un ajuste aleatorio
+      const precioAjustado = precioCompra * (1 + Math.random() * 0.05 - 0.025); // Ajusta entre ±2.5%
+      const prediccionInicial = await Prediccion.prediccionBrown(
+        [precioAjustado],
+        0.5
+      );
+
+      await Predicciones.create({
+        idProducto: nuevoProducto.idProducto,
+        precioPredicho: prediccionInicial,
+        metodo: "Brown",
+        fecha_prediccion: new Date(),
+      } as CreationAttributes<Predicciones>);
 
       await registrarEnBitacora(
         req.user?.idUsuario || null,
@@ -64,7 +79,7 @@ const ProductosController = {
       );
 
       return res.status(201).json({
-        message: "Producto e inventario creados exitosamente",
+        message: "Producto e inventario creados exitosamente con predicción",
         producto: nuevoProducto,
       });
     } catch (error) {
@@ -123,78 +138,119 @@ const ProductosController = {
     }
   },
 
-  // Actualizar un producto y registrar en el historial de precios si cambia el precio
-  actualizarProducto: async (
-    req: CustomRequest,
-    res: Response
-  ): Promise<Response | void> => {
-    const { idProducto, codigoSAP, nombre, categoria, precioCompra, estado } =
+  // Actualizar un producto y registrar en el historial de precios si cambia el precio y genera una nueva predicción
+actualizarProducto: async (
+  req: CustomRequest,
+  res: Response
+): Promise<Response | void> => {
+  const { idProducto, codigoSAP, nombre, categoria, precioCompra, estado } =
       req.body;
 
-    if (!idProducto) {
+  if (!idProducto) {
       return res.status(400).json({ message: "Se requiere idProducto" });
-    }
+  }
 
-    try {
+  try {
       const producto = await Productos.findByPk(idProducto);
       if (!producto) {
-        return res.status(404).json({ message: "Producto no encontrado" });
+          return res.status(404).json({ message: "Producto no encontrado" });
       }
 
       const datosAnteriores = {
-        codigoSAP: producto.codigoSAP,
-        nombre: producto.nombre,
-        categoria: producto.categoria,
-        precioCompra: producto.precioCompra,
-        estado: producto.estado,
+          codigoSAP: producto.codigoSAP,
+          nombre: producto.nombre,
+          categoria: producto.categoria,
+          precioCompra: producto.precioCompra,
+          estado: producto.estado,
       };
 
-      // Verificar si el precio ha cambiado y registrar el nuevo precio en historial de precios
+      // Si el precio ha cambiado, registrar el nuevo precio en el historial de precios y generar una predicción
       if (precioCompra && precioCompra !== producto.precioCompra) {
-        await HistorialPrecios.create({
-          idProducto: producto.idProducto,
-          precio: precioCompra, // Guardamos el nuevo precio en lugar del anterior
-          fecha_registro: new Date(),
-        } as CreationAttributes<HistorialPrecios>);
+          // Registrar el cambio de precio en el historial
+          await HistorialPrecios.create({
+              idProducto: producto.idProducto,
+              precio: precioCompra,
+              fecha_registro: new Date(),
+          } as CreationAttributes<HistorialPrecios>);
+
+          // Obtener todos los precios históricos para aplicar la predicción
+          const historialPrecios = await HistorialPrecios.findAll({
+              where: { idProducto },
+              order: [["fecha_registro", "ASC"]],
+          });
+          const precios = historialPrecios.map((entry) => entry.precio);
+
+          // Generar predicciones utilizando ambos métodos si hay suficientes datos
+          let prediccionBrown = null;
+          let prediccionHolt = null;
+
+          if (precios.length >= 2) {
+              prediccionBrown = await Prediccion.prediccionBrown(precios, 0.5);
+              prediccionHolt = await Prediccion.metodoholt(precios, 0.5, 0.5);
+
+              // Guardar ambas predicciones
+              await Predicciones.create({
+                  idProducto: producto.idProducto,
+                  precioPredicho: prediccionBrown,
+                  metodo: "Brown",
+                  fecha_prediccion: new Date(),
+              } as CreationAttributes<Predicciones>);
+
+              await Predicciones.create({
+                  idProducto: producto.idProducto,
+                  precioPredicho: prediccionHolt,
+                  metodo: "Holt",
+                  fecha_prediccion: new Date(),
+              } as CreationAttributes<Predicciones>);
+          } else if (precios.length === 1) {
+              // Solo aplicar Brown si hay un solo precio
+              prediccionBrown = await Prediccion.prediccionBrown(precios, 0.5);
+
+              await Predicciones.create({
+                  idProducto: producto.idProducto,
+                  precioPredicho: prediccionBrown,
+                  metodo: "Brown",
+                  fecha_prediccion: new Date(),
+              } as CreationAttributes<Predicciones>);
+          }
       }
 
       // Actualizar el producto con los nuevos datos
       await producto.update({
-        codigoSAP: codigoSAP || producto.codigoSAP,
-        nombre: nombre || producto.nombre,
-        categoria: categoria || producto.categoria,
-        precioCompra: precioCompra || producto.precioCompra,
-        estado: estado || producto.estado,
-      });
-
-      await registrarEnBitacora(
-        req.user?.idUsuario || null,
-        "Edicion",
-        "Productos",
-        producto.codigoSAP,
-        `Producto ${producto.nombre} actualizado de ${JSON.stringify(
-          datosAnteriores
-        )} a ${JSON.stringify({
           codigoSAP: codigoSAP || producto.codigoSAP,
           nombre: nombre || producto.nombre,
           categoria: categoria || producto.categoria,
           precioCompra: precioCompra || producto.precioCompra,
           estado: estado || producto.estado,
-        })}`
+      });
+
+      await registrarEnBitacora(
+          req.user?.idUsuario || null,
+          "Edicion",
+          "Productos",
+          producto.codigoSAP,
+          `Producto ${producto.nombre} actualizado de ${JSON.stringify(
+              datosAnteriores
+          )} a ${JSON.stringify({
+              codigoSAP: codigoSAP || producto.codigoSAP,
+              nombre: nombre || producto.nombre,
+              categoria: categoria || producto.categoria,
+              precioCompra: precioCompra || producto.precioCompra,
+              estado: estado || producto.estado,
+          })}`
       );
 
       return res.status(200).json({
-        message: "Producto actualizado exitosamente",
-        producto,
+          message: "Producto actualizado exitosamente y predicción generada",
+          producto,
       });
-    } catch (error) {
+  } catch (error) {
       console.error("Error al actualizar producto:", error);
       return res
-        .status(500)
-        .json({ message: "Error interno del servidor", error });
-    }
-  },
-
+          .status(500)
+          .json({ message: "Error interno del servidor", error });
+  }
+},
   // Eliminar un producto y su inventario
   eliminarProducto: async (
     req: CustomRequest,
