@@ -47,7 +47,14 @@ CREATE TABLE Predicciones (
     fecha_prediccion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (idProducto) REFERENCES Productos(idProducto) ON DELETE CASCADE  -- Clave foránea corregida
 );
-
+-- Creación de la tabla HistorialPrecios
+CREATE TABLE HistorialPrecios (
+    idHistorial INT AUTO_INCREMENT PRIMARY KEY,
+    idProducto INT NOT NULL,
+    precio DECIMAL(10, 2) NOT NULL,
+    fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (idProducto) REFERENCES Productos(idProducto) ON DELETE CASCADE
+);
 -- Creación de la tabla Sesiones
 CREATE TABLE Sesiones (
     idSesion INT AUTO_INCREMENT PRIMARY KEY,
@@ -62,7 +69,7 @@ CREATE TABLE Sesiones (
 CREATE TABLE Bitacora (
     idBitacora INT AUTO_INCREMENT PRIMARY KEY,
     idUsuario INT,  -- Usuario que realizó la acción
-    accion ENUM('Creación', 'Edición', 'Eliminación') NOT NULL,  -- Tipo de operación
+    accion ENUM('Creacion', 'Edicion', 'Eliminacion') NOT NULL,  -- Tipo de operación
     tabla_afectada ENUM('Usuarios', 'Productos', 'Inventario') NOT NULL,  -- Enum para tablas afectadas
     identificadorAfectado VARCHAR(100) NOT NULL,  -- Nombre del usuario o código SAP del producto
     descripcion TEXT,  -- Detalles sobre la operación realizada

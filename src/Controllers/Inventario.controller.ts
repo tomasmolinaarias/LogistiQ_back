@@ -1,36 +1,11 @@
 import { Request, Response } from 'express';
 import { Inventario } from '../Database/Models/Inventario';
 import { Productos } from '../Database/Models/Productos';
+import { registrarEnBitacora } from "../utils/auditoria";
+import { CustomRequest } from "../Middlewares/auth.middleware";
 import { CreationAttributes } from 'sequelize';
 
 const InventarioController = {
-  // Crear una nueva entrada en el inventario
-  crearInventario: async (req: Request, res: Response): Promise<Response | void> => {
-    const { idProducto, cantidadDisponible, nivelMinimo } = req.body;
-
-    try {
-      const producto = await Productos.findByPk(idProducto);
-      if (!producto) {
-        return res.status(404).json({ message: 'Producto no encontrado' });
-      }
-
-      const nuevoInventario = await Inventario.create({
-        idProducto,
-        cantidadDisponible,
-        nivelMinimo: nivelMinimo || 0,
-        fecha_actualizacion: new Date()
-      } as CreationAttributes<Inventario>); // Se usa `CreationAttributes` para evitar error de tipos
-
-      return res.status(201).json({
-        message: 'Inventario creado exitosamente',
-        inventario: nuevoInventario
-      });
-    } catch (error) {
-      console.error('Error al crear inventario:', error);
-      return res.status(500).json({ message: 'Error interno del servidor', error });
-    }
-  },
-
   // Leer todas las entradas de inventario
   leerInventario: async (req: Request, res: Response): Promise<Response | void> => {
     try {
@@ -44,9 +19,8 @@ const InventarioController = {
       return res.status(500).json({ message: 'Error interno del servidor', error });
     }
   },
-
   // Actualizar una entrada de inventario
-  actualizarInventario : async (req: Request, res: Response): Promise<Response | void> => {
+  actualizarInventario: async (req: CustomRequest, res: Response): Promise<Response | void> => {
     const { idInventario, cantidadDisponible, nivelMinimo } = req.body;
 
     if (!idInventario) {
@@ -59,11 +33,27 @@ const InventarioController = {
         return res.status(404).json({ message: 'Inventario no encontrado' });
       }
   
+      const datosAnteriores = {
+        cantidadDisponible: inventario.cantidadDisponible,
+        nivelMinimo: inventario.nivelMinimo
+      };
+  
       await inventario.update({
         cantidadDisponible: cantidadDisponible || inventario.cantidadDisponible,
         nivelMinimo: nivelMinimo || inventario.nivelMinimo,
         fecha_actualizacion: new Date()
       });
+  
+      await registrarEnBitacora(
+        req.user?.idUsuario || null,
+        "Edicion",
+        "Inventario",
+        idInventario.toString(),
+        `Inventario actualizado de ${JSON.stringify(datosAnteriores)} a ${JSON.stringify({
+          cantidadDisponible: cantidadDisponible || inventario.cantidadDisponible,
+          nivelMinimo: nivelMinimo || inventario.nivelMinimo
+        })}`
+      );
   
       return res.status(200).json({
         message: 'Inventario actualizado exitosamente',
@@ -102,26 +92,6 @@ const InventarioController = {
   }
 },
 
-  // Eliminar una entrada de inventario
-  eliminarInventario: async (req: Request, res: Response): Promise<Response | void> => {
-    const { idInventario } = req.body;
-
-    try {
-      const inventario = await Inventario.findByPk(idInventario);
-      if (!inventario) {
-        return res.status(404).json({ message: 'Inventario no encontrado' });
-      }
-
-      await inventario.destroy();
-
-      return res.status(200).json({
-        message: 'Inventario eliminado exitosamente'
-      });
-    } catch (error) {
-      console.error('Error al eliminar inventario:', error);
-      return res.status(500).json({ message: 'Error interno del servidor', error });
-    }
-  }
 };
 
 export default InventarioController;

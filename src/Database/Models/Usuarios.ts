@@ -1,16 +1,17 @@
+// Usuarios.ts
 import {
   Table,
   Column,
   Model,
   DataType,
-  ForeignKey,
-  BelongsTo,
+  HasMany,
 } from "sequelize-typescript";
-import { RolesUsuarios } from "./RolesUsuarios";
+import { Bitacora } from "./Bitacora";
+import { RolesUsuarios } from "./RolesUsuarios";  // Manteniendo importaciones existentes
 
 @Table({
   tableName: "Usuarios",
-  timestamps: false, // Ya gestionamos el tiempo manualmente con `fecha_registro`
+  timestamps: false,
 })
 export class Usuarios extends Model<Usuarios> {
   @Column({
@@ -22,10 +23,10 @@ export class Usuarios extends Model<Usuarios> {
 
   @Column({
     type: DataType.STRING(20),
-    allowNull: false,
     unique: true,
+    allowNull: false,
   })
-  dni!: string;  // Usamos 'dni' según el SQL
+  dni!: string;
 
   @Column({
     type: DataType.STRING(100),
@@ -35,8 +36,8 @@ export class Usuarios extends Model<Usuarios> {
 
   @Column({
     type: DataType.STRING(100),
-    allowNull: false,
     unique: true,
+    allowNull: false,
   })
   email!: string;
 
@@ -45,16 +46,6 @@ export class Usuarios extends Model<Usuarios> {
     allowNull: false,
   })
   password_hash!: string;
-
-  @ForeignKey(() => RolesUsuarios)
-  @Column({
-    type: DataType.INTEGER,
-    allowNull: false,
-  })
-  idRol!: number;
-
-  @BelongsTo(() => RolesUsuarios)
-  rol!: RolesUsuarios; // Asocia el usuario con su rol
 
   @Column({
     type: DataType.ENUM("activo", "inactivo"),
@@ -67,6 +58,10 @@ export class Usuarios extends Model<Usuarios> {
     defaultValue: DataType.NOW,
   })
   fecha_registro!: Date;
+
+  // Relación de HasMany con el modelo Bitacora para tener acceso a todos los registros
+  @HasMany(() => Bitacora)
+  bitacoras!: Bitacora[];
 
   // Método para validar la contraseña (se usará en Auth)
   async validarPassword(password: string): Promise<boolean> {

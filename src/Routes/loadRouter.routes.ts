@@ -4,8 +4,10 @@ import Roles from "./RolesUsuarios.routes";
 import usuarios from "./Usuarios.routes";
 import ProductosRoutes from "./Productos.routes"
 import InventarioRoutes from "./Inventario.routes"
+import Bitacora from "./Bitacora.routes"
 export const load = (app: Application): void => {
-  app.use('/api/productos', ProductosRoutes);
+  app.use('/api/bitacora', Bitacora); 
+  app.use('/api/productos', ProductosRoutes); 
   app.use('/api/inventario', InventarioRoutes);
   app.use("/api/usuarios", usuarios); 
   app.use("/api/roles", Roles);
