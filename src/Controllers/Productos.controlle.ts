@@ -4,9 +4,10 @@ import { Inventario } from "../Database/Models/Inventario";
 import { registrarEnBitacora } from "../utils/auditoria";
 import { CustomRequest } from "../Middlewares/auth.middleware";
 import { CreationAttributes } from "sequelize";
+import { HistorialPrecios } from "../Database/Models/HistorialPrecios";
 
 const ProductosController = {
-  // Crear un nuevo producto y su inventario
+  // Crear un nuevo producto y su inventario, y registrar en el historial de precios
   crearProducto: async (
     req: CustomRequest,
     res: Response
@@ -39,6 +40,13 @@ const ProductosController = {
         estado: estado || "activo",
         fecha_registro: new Date(),
       } as CreationAttributes<Productos>);
+
+      // Registrar el precio inicial en el historial de precios
+      await HistorialPrecios.create({
+        idProducto: nuevoProducto.idProducto,
+        precio: precioCompra,
+        fecha_registro: new Date(),
+      } as CreationAttributes<HistorialPrecios>);
 
       await Inventario.create({
         idProducto: nuevoProducto.idProducto,
@@ -115,7 +123,7 @@ const ProductosController = {
     }
   },
 
-  // Actualizar un producto y registrar en bitácora
+  // Actualizar un producto y registrar en el historial de precios si cambia el precio
   actualizarProducto: async (
     req: CustomRequest,
     res: Response
@@ -141,6 +149,16 @@ const ProductosController = {
         estado: producto.estado,
       };
 
+      // Verificar si el precio ha cambiado y registrar el nuevo precio en historial de precios
+      if (precioCompra && precioCompra !== producto.precioCompra) {
+        await HistorialPrecios.create({
+          idProducto: producto.idProducto,
+          precio: precioCompra, // Guardamos el nuevo precio en lugar del anterior
+          fecha_registro: new Date(),
+        } as CreationAttributes<HistorialPrecios>);
+      }
+
+      // Actualizar el producto con los nuevos datos
       await producto.update({
         codigoSAP: codigoSAP || producto.codigoSAP,
         nombre: nombre || producto.nombre,

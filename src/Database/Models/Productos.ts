@@ -1,13 +1,6 @@
-// Productos.ts
-import {
-  Table,
-  Column,
-  Model,
-  DataType,
-  Unique,
-  HasOne,
-} from "sequelize-typescript";
+import { Table, Column, Model, DataType, Unique, HasOne, HasMany } from "sequelize-typescript";
 import { Inventario } from "./Inventario";
+import { HistorialPrecios } from "./HistorialPrecios";
 
 @Table({
   tableName: "Productos",
@@ -21,7 +14,7 @@ export class Productos extends Model<Productos> {
   })
   idProducto!: number;
 
-  @Unique  // Aseguramos la unicidad de codigoSAP
+  @Unique
   @Column({
     type: DataType.STRING(50),
     allowNull: false,
@@ -60,4 +53,8 @@ export class Productos extends Model<Productos> {
 
   @HasOne(() => Inventario)
   inventario!: Inventario;
+
+  // Relación con HistorialPrecios
+  @HasMany(() => HistorialPrecios)
+  historialPrecios!: HistorialPrecios[];
 }
