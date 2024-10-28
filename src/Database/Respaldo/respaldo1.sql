@@ -20,7 +20,7 @@ CREATE TABLE Usuarios (
 -- Creación de la tabla Productos (con Código SAP y estado agregado)
 CREATE TABLE Productos (
     idProducto INT AUTO_INCREMENT PRIMARY KEY,
-    codigoSAP VARCHAR(50) UNIQUE NOT NULL,  -- Código SAP como identificador único adicional para los productos
+    codigoSAP VARCHAR(50) NOT NULL,  -- Código SAP como identificador único adicional para los productos
     nombre VARCHAR(100) NOT NULL,
     categoria VARCHAR(100),
     precioCompra DECIMAL(10, 2) NOT NULL,
