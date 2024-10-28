@@ -1,5 +1,5 @@
 // Bitacora.ts
-import { Table, Column, Model, DataType, ForeignKey } from "sequelize-typescript";
+import { Table, Column, Model, DataType, ForeignKey, BelongsTo } from "sequelize-typescript";
 import { Usuarios } from "./Usuarios";
 
 @Table({
@@ -14,12 +14,17 @@ export class Bitacora extends Model<Bitacora> {
   })
   idBitacora!: number;
 
+  // Definimos `idUsuario` como clave foránea que hace referencia a `Usuarios`
   @ForeignKey(() => Usuarios)
   @Column({
     type: DataType.INTEGER,
-    allowNull: true, // Permite null en el modelo
+    allowNull: true,
   })
   idUsuario!: number | null;
+
+  // Relación de `BelongsTo` con el modelo `Usuarios`
+  @BelongsTo(() => Usuarios)
+  usuario!: Usuarios;
 
   @Column({
     type: DataType.ENUM("Creacion", "Edicion", "Eliminacion"),

@@ -25,6 +25,7 @@ export class Productos extends Model<Productos> {
   @Column({
     type: DataType.STRING(50),
     allowNull: false,
+    unique: true 
   })
   codigoSAP!: string;
 
