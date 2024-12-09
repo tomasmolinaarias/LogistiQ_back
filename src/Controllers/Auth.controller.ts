@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { Usuarios } from "../Database/Models/Usuarios";
+import { RolesUsuarios } from "../Database/Models/RolesUsuarios";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
@@ -9,7 +10,13 @@ const AuthController = {
 
     try {
       // Buscar usuario por email
-      const usuario = await Usuarios.findOne({ where: { email } });
+      const usuario = await Usuarios.findOne({ where: { email },
+      include:[
+        {
+          model: RolesUsuarios,
+          as:"rol" // Selecciona solo el nombre del rol
+        }
+      ] });
 
       if (!usuario) {
         return res.status(404).json({ message: "Usuario no encontrado" });
@@ -20,10 +27,10 @@ const AuthController = {
       if (!validPassword) {
         return res.status(400).json({ message: "Contraseña incorrecta" });
       }
-
+      const rol = usuario.rol;
       // Crear el token JWT
       const token = jwt.sign(
-        { idUsuario: usuario.idUsuario, email: usuario.email },
+        { idUsuario: usuario.idUsuario, email: usuario.email, idRol: rol?.idRol,nombreRol: rol?.nombreRol, },
         process.env.JWT_SECRET || "secret_key",
         { expiresIn: "1d" } 
       );
